@@ -73,7 +73,7 @@
             "phpcs"
         ],
         "fix": [
-            "php-cs-fixer fix"
+            "php-cs-fixer fix && ./vendor/bin/pint"
         ]
     },
     "extra": {
