@@ -1,0 +1,72 @@
+services:
+  app:
+    build: .
+    container_name: barbershop_app
+    volumes:
+      - ../../www:/var/www/html
+      - ../../www/public:/var/www/html/public
+    command: sh -c "git config --global --add safe.directory /var/www/html && php-fpm"
+    ports:
+      - "8080:80"
+    environment:
+      - TZ=America/Belem
+      - DB_HOST=db
+      - DB_NAME=barbershop
+      - DB_USER=barbershop
+      - DB_PASS=barbershop
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - db
+      - redis
+    networks:
+      - barbershop_net
+
+  nginx:
+    image: nginx:alpine
+    container_name: barbershop_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ../../www/public:/var/www/html/public
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - barbershop_net
+
+  db:
+    image: mariadb:11.8.2
+    container_name: barbershop_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: barbershop
+      MYSQL_USER: barbershop
+      MYSQL_PASSWORD: barbershop
+    ports:
+      - "3306:3306"
+    volumes:
+      - barbershop_db_data:/var/lib/mysql
+    networks:
+      - barbershop_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: barbershop_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - barbershop_redis_data:/data
+#    command: redis-server --appendonly yes --requirepass "redis123"
+    networks:
+      - barbershop_net
+
+volumes:
+  barbershop_db_data:
+  barbershop_redis_data:
+
+networks:
+  barbershop_net:
+    driver: bridge
